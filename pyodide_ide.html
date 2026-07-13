@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Python 実験ノート — 入力練習 & Pyodide IDE</title>
+<style>
+  :root{
+    --board: #1e3329;
+    --board-edge: #14231b;
+    --chalk: #eef2ea;
+    --chalk-dim: #a9b8ac;
+    --chalk-ghost: rgba(238,242,234,0.28);
+    --chalk-yellow: #e8d693;
+    --chalk-pink: #f0857f;
+    --chalk-green: #9fd6a0;
+    --frame: #6b5541;
+    --frame-dark: #4a3a2c;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    min-height:100vh;
+    background: #0f1a14;
+    font-family: "Hiragino Kaku Gothic ProN","Yu Gothic",-apple-system,sans-serif;
+    color: var(--chalk);
+    display:flex;
+    justify-content:center;
+    padding: 24px 16px;
+  }
+  .frame{
+    width:100%;
+    max-width:1080px;
+    background: var(--frame);
+    border-radius: 14px;
+    padding: 14px 14px 20px;
+    box-shadow: 0 12px 0 var(--frame-dark), 0 14px 24px rgba(0,0,0,0.4);
+  }
+  .board{
+    background:
+      linear-gradient(var(--board), var(--board)),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
+    border-radius: 6px;
+    padding: 22px 24px 18px;
+  }
+  header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom: 6px;
+    border-bottom: 1px dashed rgba(238,242,234,0.25);
+    padding-bottom: 14px;
+  }
+  header h1{
+    font-family: "Yu Mincho", serif;
+    font-weight:500;
+    font-size: 22px;
+    letter-spacing: 0.04em;
+    margin: 0;
+  }
+  header .tag{
+    font-size:12px;
+    color: var(--chalk-dim);
+    letter-spacing: 0.05em;
+  }
+  .toolbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin: 16px 0 10px;
+  }
+  select, button{
+    font-family: inherit;
+    font-size: 13px;
+    border-radius: 4px;
+    border: 1px solid rgba(238,242,234,0.35);
+    background: transparent;
+    color: var(--chalk);
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+  select{ color: var(--chalk-dim); }
+  select option{ color:#111; }
+  button:hover, select:hover{ border-color: var(--chalk); }
+  #modeBtn.active{
+    background: rgba(232,214,147,0.18);
+    border-color: var(--chalk-yellow);
+    color: var(--chalk-yellow);
+  }
+  #runBtn{
+    background: var(--chalk-yellow);
+    color: #2c2508;
+    border: none;
+    font-weight: 700;
+    padding: 7px 18px;
+  }
+  #runBtn:disabled{ opacity: 0.5; cursor: not-allowed; }
+  #status{
+    font-size: 12px;
+    color: var(--chalk-dim);
+    margin-left: auto;
+  }
+  .progressRow{
+    margin: 0 0 14px;
+    font-size: 12.5px;
+    color: var(--chalk-dim);
+    display:none;
+    align-items:center;
+    gap:10px;
+  }
+  .progressRow.show{ display:flex; }
+  .progressBarOuter{
+    flex:1;
+    height:5px;
+    background: rgba(238,242,234,0.15);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .progressBarInner{
+    height:100%;
+    width:0%;
+    background: var(--chalk-yellow);
+    transition: width 0.15s ease;
+  }
+  #progressText.done{ color: var(--chalk-green); font-weight:700; }
+  .panes{
+    display:grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 760px){
+    .panes{ grid-template-columns: 1fr; }
+  }
+  .pane-label{
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--chalk-dim);
+    margin: 0 0 6px 2px;
+    text-transform: uppercase;
+  }
+  .editor-wrap{
+    position: relative;
+    background: rgba(0,0,0,0.18);
+    border-radius: 6px;
+    border: 1px solid rgba(238,242,234,0.15);
+    overflow:hidden;
+  }
+  .editor-wrap.correct{
+    border-color: var(--chalk-green);
+  }
+  #lineNumbers{
+    position:absolute;
+    top:0; left:0; bottom:0;
+    width: 38px;
+    padding: 12px 0;
+    text-align:right;
+    font: 13px/1.6 "SFMono-Regular", Consolas, monospace;
+    color: rgba(238,242,234,0.28);
+    user-select: none;
+    background: rgba(0,0,0,0.12);
+    z-index: 3;
+  }
+  .code-scroll{
+    position:relative;
+    height: 360px;
+    overflow: auto;
+    margin-left: 38px;
+  }
+  #overlay, textarea{
+    position:absolute;
+    top:0; left:0;
+    width: max-content;
+    min-width: 100%;
+    min-height: 100%;
+    padding: 12px 14px;
+    font: 13px/1.6 "SFMono-Regular", Consolas, "Courier New", monospace;
+    white-space: pre;
+    word-break: normal;
+  }
+  #overlay{
+    margin:0;
+    color: var(--chalk);
+    pointer-events: none;
+    z-index: 2;
+  }
+  textarea{
+    margin:0;
+    border:none;
+    background: transparent;
+    resize:none;
+    outline:none;
+    color: var(--chalk);
+    z-index: 1;
+  }
+  textarea.practice-active{
+    color: transparent;
+    caret-color: var(--chalk-yellow);
+  }
+  .ok{ color: var(--chalk); }
+  .bad{ color: var(--chalk-pink); background: rgba(240,133,127,0.18); border-radius:2px; }
+  .ghost{ color: var(--chalk-ghost); }
+  #output{
+    width:100%;
+    height: 360px;
+    overflow-y:auto;
+    font: 13px/1.6 "SFMono-Regular", Consolas, "Courier New", monospace;
+    padding: 12px 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: rgba(0,0,0,0.18);
+    border-radius: 6px;
+    border: 1px solid rgba(238,242,234,0.15);
+  }
+  #output .err{ color: var(--chalk-pink); }
+  #output .placeholder{ color: rgba(238,242,234,0.3); }
+  .footnote{
+    margin-top: 12px;
+    font-size: 11.5px;
+    color: rgba(238,242,234,0.4);
+    display:flex;
+    justify-content: space-between;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  #submitBtn, #copyBtn{
+    border-color: rgba(159,214,160,0.5);
+    color: var(--chalk-green);
+  }
+  #submitBtn:hover, #copyBtn:hover{ border-color: var(--chalk-green); }
+  #copyMsg{
+    font-size: 12px;
+    color: var(--chalk-green);
+    margin-left: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <div class="board">
+    <header>
+      <h1>Python 実験ノート</h1>
+      <span class="tag">Pyodide (CPython on WebAssembly) — サーバー不要・ブラウザだけで実行</span>
+    </header>
+
+    <div class="toolbar">
+      <select id="sampleSelect">
+        <option value="">お手本を選ぶ...</option>
+        <option value="kiso1">基礎STEP1：文字と計算結果を表示する</option>
+        <option value="kiso2">基礎STEP2：三角形の面積を求める</option>
+        <option value="kiso3">基礎STEP3：点数の判定(分岐構造)</option>
+        <option value="kiso4for">基礎STEP4：0～5を表示(for文)</option>
+        <option value="kiso4while">基礎STEP4：0～5を表示(while文)</option>
+        <option value="ouyo1">応用1 STEP1：FizzBuzz</option>
+        <option value="ouyo2">応用1 STEP2：偶数・奇数の判定</option>
+        <option value="ouyo3">応用1 STEP3：5つのテストの合計と平均</option>
+      </select>
+      <button id="modeBtn">✎ 入力練習モード: OFF</button>
+      <button id="runBtn">▶ 実行 (Ctrl+Enter)</button>
+      <button id="clearBtn">出力を消す</button>
+      <button id="copyBtn">📄 コードをコピー</button>
+      <button id="submitBtn">📋 提出フォームを開く</button>
+      <span id="copyMsg"></span>
+      <span id="status">Pyodideを読み込み中...</span>
+    </div>
+
+    <div class="progressRow" id="progressRow">
+      <span>入力の一致度:</span>
+      <div class="progressBarOuter"><div class="progressBarInner" id="progressBar"></div></div>
+      <span id="progressText">0 / 0 文字</span>
+    </div>
+
+    <div class="panes">
+      <div>
+        <p class="pane-label">コード</p>
+        <div class="editor-wrap" id="editorWrap">
+          <div id="lineNumbers">1</div>
+          <div class="code-scroll" id="codeScroll">
+            <pre id="overlay"></pre>
+            <textarea id="code" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p class="pane-label">実行結果</p>
+        <div id="output"><span class="placeholder">ここに出力が表示されます。</span></div>
+      </div>
+    </div>
+
+    <div class="footnote">
+      <span>①「コードをコピー」→ ②「提出フォームを開く」で開いたMS Formsに貼り付けて送信してください。</span>
+      <span id="loadinfo"></span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script>
+const codeArea = document.getElementById('code');
+const overlay = document.getElementById('overlay');
+const codeScroll = document.getElementById('codeScroll');
+const lineNumbers = document.getElementById('lineNumbers');
+const editorWrap = document.getElementById('editorWrap');
+const output = document.getElementById('output');
+const runBtn = document.getElementById('runBtn');
+const clearBtn = document.getElementById('clearBtn');
+const status = document.getElementById('status');
+const loadinfo = document.getElementById('loadinfo');
+const sampleSelect = document.getElementById('sampleSelect');
+const modeBtn = document.getElementById('modeBtn');
+const progressRow = document.getElementById('progressRow');
+const progressBar = document.getElementById('progressBar');
+const progressText = document.getElementById('progressText');
+
+// ▼▼▼ MS Formsの回答URL(問題ごとの事前入力リンクを推奨)をここに貼り付けてください ▼▼▼
+// 「問題選択」の質問を、Formsの「事前入力リンクを取得」機能でその問題名にあらかじめ選択させておくと
+// 生徒が問題を選び間違えにくくなります。用意していなければ、全部同じ通常のFormsのURLで構いません。
+const FORMS_URLS = {
+  kiso1: "https://forms.cloud.microsoft/r/6zApMTxLyM",
+  kiso2: "https://forms.cloud.microsoft/r/6zApMTxLyM",
+  kiso3: "https://forms.cloud.microsoft/r/6zApMTxLyM",
+  kiso4for: "https://forms.cloud.microsoft/r/6zApMTxLyM",
+  kiso4while: "https://forms.cloud.microsoft/r/6zApMTxLyM",
+  ouyo1: "https://forms.cloud.microsoft/r/6zApMTxLyM",
+  ouyo2: "https://forms.cloud.microsoft/r/6zApMTxLyM",
+  ouyo3: "https://forms.cloud.microsoft/r/6zApMTxLyM",
+  default: "https://forms.cloud.microsoft/r/6zApMTxLyM"
+};
+// ▲▲▲ ここまで ▲▲▲
+
+const sampleLabels = {
+  kiso1: "基礎STEP1：文字と計算結果を表示する",
+  kiso2: "基礎STEP2：三角形の面積を求める",
+  kiso3: "基礎STEP3：点数の判定(分岐構造)",
+  kiso4for: "基礎STEP4：0～5を表示(for文)",
+  kiso4while: "基礎STEP4：0～5を表示(while文)",
+  ouyo1: "応用1 STEP1：FizzBuzz",
+  ouyo2: "応用1 STEP2：偶数・奇数の判定",
+  ouyo3: "応用1 STEP3：5つのテストの合計と平均"
+};
+
+const samples = {
+  kiso1: `print('Hello World')
+print(3+4*5)
+print('High'+'School')
+`,
+  kiso2: `bottom=7
+height=3
+area=bottom*height/2
+print('menseki:',area)
+`,
+  kiso3: `judge=int(input('INPUT Score:'))
+if judge>=90:
+    print('A')
+elif judge>=70:
+    print('B')
+elif judge>=50:
+    print('C')
+else:
+    print('D')
+`,
+  kiso4for: `for num in range(6):
+    print('Number',num)
+print('end')
+`,
+  kiso4while: `num=0
+while num<6:
+    print('Number',num)
+    num=num+1
+print('end')
+`,
+  ouyo1: `for i in range(1,31):
+    if i%15==0:
+        print('FizzBuzz')
+    elif i%3==0:
+        print('Fizz')
+    elif i%5==0:
+        print('Buzz')
+    else:
+        print(i)
+`,
+  ouyo2: `numbers=[77,20,4,31,17]
+for x in numbers:
+    if x%2==0:
+        print(x,':even number')
+    else:
+        print(x,':odd number')
+`,
+  ouyo3: `score=[]
+sum=0
+for i in range(5):
+    score.append(int(input('INPUT Score:')))
+    sum=sum+score[i]
+print(score)
+print('goukei:',sum)
+print('heikin:',sum/len(score))
+`
+};
+
+let practiceMode = false;
+let target = '';
+let isComposing = false;
+
+function escapeHtml(ch) {
+  if (ch === '&') return '&amp;';
+  if (ch === '<') return '&lt;';
+  if (ch === '>') return '&gt;';
+  return ch;
+}
+
+function updateLineNumbers() {
+  const reference = practiceMode && target ? target : codeArea.value;
+  const typedLines = codeArea.value.split('\n').length;
+  const refLines = reference.split('\n').length;
+  const lines = Math.max(typedLines, refLines);
+  let out = '';
+  for (let i = 1; i <= lines; i++) out += i + '\n';
+  lineNumbers.textContent = out;
+}
+
+function renderOverlay() {
+  if (!practiceMode) {
+    overlay.innerHTML = '';
+    return;
+  }
+  const typed = codeArea.value;
+  const len = Math.max(typed.length, target.length);
+  let html = '';
+  let correctCount = 0;
+  for (let i = 0; i < len; i++) {
+    const tChar = target[i];
+    const uChar = typed[i];
+    if (uChar === undefined) {
+      html += '<span class="ghost">' + escapeHtml(tChar) + '</span>';
+    } else if (tChar !== undefined && uChar === tChar) {
+      html += '<span class="ok">' + escapeHtml(uChar) + '</span>';
+      correctCount++;
+    } else {
+      html += '<span class="bad">' + escapeHtml(uChar === '\n' ? ' ' : uChar) + (uChar === '\n' ? '\n' : '') + '</span>';
+    }
+  }
+  overlay.innerHTML = html;
+
+  const isDone = typed.length === target.length && typed === target;
+  progressRow.classList.add('show');
+  progressBar.style.width = Math.round((correctCount / target.length) * 100) + '%';
+  if (isDone) {
+    progressText.textContent = '入力完了！実行ボタンを押してみましょう';
+    progressText.classList.add('done');
+    editorWrap.classList.add('correct');
+  } else {
+    progressText.textContent = correctCount + ' / ' + target.length + ' 文字';
+    progressText.classList.remove('done');
+    editorWrap.classList.remove('correct');
+  }
+  updateLineNumbers();
+}
+
+function syncScroll() {
+  overlay.style.transform = 'translate(' + (-codeScroll.scrollLeft) + 'px,' + (-codeScroll.scrollTop) + 'px)';
+  lineNumbers.scrollTop = codeScroll.scrollTop;
+}
+codeScroll.addEventListener('scroll', syncScroll);
+
+codeArea.addEventListener('compositionstart', () => { isComposing = true; });
+codeArea.addEventListener('compositionend', () => {
+  isComposing = false;
+  renderOverlay();
+});
+
+codeArea.addEventListener('input', () => {
+  if (!isComposing) renderOverlay();
+  else updateLineNumbers();
+});
+
+codeArea.addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const start = codeArea.selectionStart, end = codeArea.selectionEnd;
+    codeArea.value = codeArea.value.slice(0, start) + '    ' + codeArea.value.slice(end);
+    codeArea.selectionStart = codeArea.selectionEnd = start + 4;
+    renderOverlay();
+  }
+  if (e.key === 'Enter' && e.ctrlKey) {
+    e.preventDefault();
+    runCode();
+  }
+});
+
+function setPracticeMode(on) {
+  practiceMode = on;
+  modeBtn.textContent = on ? '✎ 入力練習モード: ON' : '✎ 入力練習モード: OFF';
+  modeBtn.classList.toggle('active', on);
+  codeArea.classList.toggle('practice-active', on);
+  progressRow.classList.toggle('show', on && !!target);
+  if (on) {
+    const key = sampleSelect.value;
+    target = key && samples[key] ? samples[key] : '';
+    codeArea.value = '';
+  } else {
+    overlay.innerHTML = '';
+    editorWrap.classList.remove('correct');
+  }
+  renderOverlay();
+  codeArea.focus();
+}
+
+modeBtn.addEventListener('click', () => setPracticeMode(!practiceMode));
+
+sampleSelect.addEventListener('change', () => {
+  const key = sampleSelect.value;
+  if (!key || !samples[key]) return;
+  if (practiceMode) {
+    target = samples[key];
+    codeArea.value = '';
+    renderOverlay();
+  } else {
+    target = samples[key];
+    codeArea.value = '';
+    updateLineNumbers();
+  }
+  codeArea.focus();
+});
+
+updateLineNumbers();
+
+function appendOutput(text, isErr) {
+  const span = document.createElement('span');
+  if (isErr) span.className = 'err';
+  span.textContent = text;
+  output.appendChild(span);
+  output.scrollTop = output.scrollHeight;
+}
+
+let pyodideReady = null;
+
+async function initPyodide() {
+  status.textContent = 'Pyodideを読み込み中...(初回は数十MBあるので少し時間がかかります)';
+  const t0 = performance.now();
+  const pyodide = await loadPyodide();
+  pyodide.setStdout({ batched: (s) => appendOutput(s + '\n', false) });
+  pyodide.setStderr({ batched: (s) => appendOutput(s + '\n', true) });
+  await pyodide.runPythonAsync(`
+import builtins
+from js import prompt as _js_prompt
+def input(text=''):
+    result = _js_prompt(text)
+    if result is None:
+        raise EOFError('input()がキャンセルされました')
+    return result
+builtins.input = input
+`);
+  const t1 = performance.now();
+  loadinfo.textContent = `読み込み完了 (${((t1 - t0) / 1000).toFixed(1)}秒)`;
+  status.textContent = '準備完了';
+  runBtn.disabled = false;
+  return pyodide;
+}
+
+runBtn.disabled = true;
+pyodideReady = initPyodide().catch(err => {
+  status.textContent = '読み込みに失敗しました';
+  appendOutput('Pyodideの読み込みでエラーが発生しました: ' + err + '\n', true);
+});
+
+async function runCode() {
+  const pyodide = await pyodideReady;
+  if (!pyodide) return;
+  output.innerHTML = '';
+  runBtn.disabled = true;
+  status.textContent = '実行中...';
+  try {
+    await pyodide.runPythonAsync(codeArea.value);
+  } catch (err) {
+    appendOutput(String(err), true);
+  } finally {
+    status.textContent = '準備完了';
+    runBtn.disabled = false;
+  }
+}
+
+runBtn.addEventListener('click', runCode);
+clearBtn.addEventListener('click', () => {
+  output.innerHTML = '<span class="placeholder">ここに出力が表示されます。</span>';
+});
+
+const copyBtn = document.getElementById('copyBtn');
+const copyMsg = document.getElementById('copyMsg');
+const submitBtn = document.getElementById('submitBtn');
+
+copyBtn.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(codeArea.value);
+    copyMsg.textContent = 'コピーしました！';
+  } catch (err) {
+    codeArea.select();
+    document.execCommand('copy');
+    copyMsg.textContent = 'コピーしました！';
+  }
+  setTimeout(() => { copyMsg.textContent = ''; }, 2500);
+});
+
+submitBtn.addEventListener('click', () => {
+  const key = sampleSelect.value;
+  const url = (key && FORMS_URLS[key]) ? FORMS_URLS[key] : FORMS_URLS.default;
+  if (!url || url.indexOf('PASTE_') === 0) {
+    copyMsg.textContent = 'Formsの提出先URLが未設定です(FORMS_URLS)。';
+    return;
+  }
+  window.open(url, '_blank');
+});
+</script>
+
+</body>
+</html>

@@ -5,64 +5,111 @@
 <title>Python 実験ノート — 入力練習 & Pyodide IDE</title>
 <style>
   :root{
+    /* 黒板(コード欄・実行結果)の色：従来どおり */
     --board: #1e3329;
     --board-edge: #14231b;
     --chalk: #eef2ea;
     --chalk-dim: #a9b8ac;
-    --chalk-ghost: rgba(238,242,234,0.28);
+    --chalk-ghost: rgba(238,242,234,0.30);
     --chalk-yellow: #e8d693;
     --chalk-pink: #f0857f;
     --chalk-green: #9fd6a0;
-    --frame: #6b5541;
-    --frame-dark: #4a3a2c;
+
+    /* コードの文字サイズ */
+    --code-size: 16px;
+
+    /* まわりの色(やさしいパステル) */
+    --ink: #2a3a4a;
+    --ink-dim: #5f6f80;
+    --line: #dbe3ee;
+
+    --mint-bg: #d8f3e8;   --mint-ink: #1d6a50;   --mint-line: #9fd9c1;
+    --sky-bg: #dcebff;    --sky-ink: #1f5aa0;    --sky-line: #a9c8f0;
+    --sun-bg: #fff0bf;    --sun-ink: #7a5600;    --sun-line: #f1cf63;
+    --peach-bg: #ffe3d6;  --peach-ink: #9a4a22;  --peach-line: #f5b597;
+    --lav-bg: #ece7fb;    --lav-ink: #5a4a8c;    --lav-line: #c9bdf0;
+
+    --run-1: #3cbf93;
+    --run-2: #2aa3b8;
   }
   *{ box-sizing: border-box; }
   body{
     margin:0;
     min-height:100vh;
-    background: #0f1a14;
     font-family: "Hiragino Kaku Gothic ProN","Yu Gothic",-apple-system,sans-serif;
-    color: var(--chalk);
+    color: var(--ink);
     display:flex;
     justify-content:center;
-    padding: 24px 16px;
+    align-items:flex-start;
+    padding: 28px 16px;
+    background:
+      radial-gradient(circle at 8% 12%, rgba(255,214,140,0.45) 0, rgba(255,214,140,0) 28%),
+      radial-gradient(circle at 92% 18%, rgba(160,205,255,0.55) 0, rgba(160,205,255,0) 32%),
+      radial-gradient(circle at 85% 92%, rgba(205,190,250,0.5) 0, rgba(205,190,250,0) 30%),
+      radial-gradient(circle at 10% 88%, rgba(150,225,195,0.55) 0, rgba(150,225,195,0) 30%),
+      linear-gradient(160deg, #eef8f4 0%, #eef3fd 55%, #f6f0fb 100%);
+    background-attachment: fixed;
   }
   .frame{
     width:100%;
-    max-width:1080px;
-    background: var(--frame);
-    border-radius: 14px;
-    padding: 14px 14px 20px;
-    box-shadow: 0 12px 0 var(--frame-dark), 0 14px 24px rgba(0,0,0,0.4);
+    max-width:1100px;
+    background: rgba(255,255,255,0.82);
+    border: 1px solid rgba(255,255,255,0.9);
+    border-radius: 20px;
+    padding: 0;
+    box-shadow: 0 10px 30px rgba(70,90,140,0.12);
+    overflow: hidden;
+  }
+  .frame::before{
+    content:"";
+    display:block;
+    height: 6px;
+    background: linear-gradient(90deg, #8fd9bd, #9cc5f5, #c8b8f2, #f7c3a6, #f6d982);
   }
   .board{
-    background:
-      linear-gradient(var(--board), var(--board)),
-      repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
-    border-radius: 6px;
-    padding: 22px 24px 18px;
+    background: transparent;
+    padding: 22px 26px 20px;
   }
   header{
     display:flex;
-    align-items:baseline;
+    align-items:center;
     justify-content:space-between;
     flex-wrap:wrap;
     gap:8px;
     margin-bottom: 6px;
-    border-bottom: 1px dashed rgba(238,242,234,0.25);
+    border-bottom: 1px dashed var(--line);
     padding-bottom: 14px;
   }
   header h1{
-    font-family: "Yu Mincho", serif;
-    font-weight:500;
-    font-size: 22px;
+    font-weight:700;
+    font-size: 24px;
     letter-spacing: 0.04em;
     margin: 0;
+    color: var(--ink);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  header h1::before{
+    content:"Py";
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width: 38px; height: 38px;
+    border-radius: 12px;
+    font: 700 16px "SFMono-Regular", Consolas, monospace;
+    color:#fff;
+    background: linear-gradient(135deg, var(--run-1), var(--run-2));
+    box-shadow: 0 3px 8px rgba(42,163,184,0.35);
   }
   header .tag{
     font-size:12px;
-    color: var(--chalk-dim);
-    letter-spacing: 0.05em;
+    color: var(--ink-dim);
+    letter-spacing: 0.04em;
+    background: var(--sky-bg);
+    color: var(--sky-ink);
+    padding: 4px 12px;
+    border-radius: 999px;
   }
   .toolbar{
     display:flex;
@@ -73,100 +120,151 @@
   }
   select, button{
     font-family: inherit;
-    font-size: 13px;
-    border-radius: 4px;
-    border: 1px solid rgba(238,242,234,0.35);
-    background: transparent;
-    color: var(--chalk);
-    padding: 7px 12px;
+    font-size: 13.5px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    padding: 8px 16px;
     cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
   }
-  select{ color: var(--chalk-dim); }
-  select option{ color:#111; }
-  button:hover, select:hover{ border-color: var(--chalk); }
-  #modeBtn.active{
-    background: rgba(232,214,147,0.18);
-    border-color: var(--chalk-yellow);
-    color: var(--chalk-yellow);
+  select{ border-radius: 12px; font-weight: 600; }
+  select option, select optgroup{ color:#111; }
+  button:hover{ transform: translateY(-1px); box-shadow: 0 4px 10px rgba(70,90,140,0.15); }
+  button:active{ transform: translateY(0); box-shadow:none; }
+  select:hover{ border-color: var(--sky-line); }
+  button:focus-visible, select:focus-visible{ outline: 3px solid var(--sky-line); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce){
+    button, select{ transition:none; }
+    button:hover{ transform:none; }
   }
+
+  #modeBtn{ background: #fffaf0; border-color: var(--sun-line); color: var(--sun-ink); }
+  #modeBtn.active{ background: var(--sun-bg); border-color: #e6b92e; font-weight: 700; }
+  #pairBtn{ background:#fff; border-color: var(--mint-line); color: var(--mint-ink); }
+  #pairBtn.active{ background: var(--mint-bg); font-weight: 700; }
+  #pairBtn.paused{ opacity: 0.55; }
+  #clearBtn{ background: var(--lav-bg); border-color: var(--lav-line); color: var(--lav-ink); }
+  #copyBtn{ background: var(--sky-bg); border-color: var(--sky-line); color: var(--sky-ink); font-weight: 600; }
+  #submitBtn{ background: var(--peach-bg); border-color: var(--peach-line); color: var(--peach-ink); font-weight: 600; }
   #runBtn{
-    background: var(--chalk-yellow);
-    color: #2c2508;
+    background: linear-gradient(135deg, var(--run-1), var(--run-2));
+    color: #ffffff;
     border: none;
     font-weight: 700;
-    padding: 7px 18px;
+    padding: 9px 22px;
+    box-shadow: 0 4px 12px rgba(42,163,184,0.35);
   }
-  #runBtn:disabled{ opacity: 0.5; cursor: not-allowed; }
+  #runBtn:hover{ box-shadow: 0 6px 16px rgba(42,163,184,0.45); }
+  #runBtn:disabled{ opacity: 0.5; cursor: not-allowed; transform:none; box-shadow:none; }
+
   #status{
     font-size: 12px;
-    color: var(--chalk-dim);
+    color: var(--ink-dim);
     margin-left: auto;
+  }
+  .hint{
+    margin: 0 0 12px 2px;
+    font-size: 12px;
+    color: var(--ink-dim);
+    line-height: 2;
+  }
+  .hint kbd{
+    font: 11.5px "SFMono-Regular", Consolas, monospace;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 0 5px;
+    color: var(--ink);
   }
   .progressRow{
     margin: 0 0 14px;
-    font-size: 12.5px;
-    color: var(--chalk-dim);
+    font-size: 13px;
+    color: var(--ink-dim);
     display:none;
     align-items:center;
     gap:10px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 16px;
   }
   .progressRow.show{ display:flex; }
   .progressBarOuter{
     flex:1;
-    height:5px;
-    background: rgba(238,242,234,0.15);
-    border-radius:3px;
+    height:10px;
+    background: #edf1f7;
+    border-radius:999px;
     overflow:hidden;
   }
   .progressBarInner{
     height:100%;
     width:0%;
-    background: var(--chalk-yellow);
+    border-radius:999px;
+    background: linear-gradient(90deg, #f6d982, #8fd9bd, #6fc0e8);
     transition: width 0.15s ease;
   }
-  #progressText.done{ color: var(--chalk-green); font-weight:700; }
+  #progressText{ font-weight: 600; color: var(--ink); }
+  #progressText.done{ color: var(--mint-ink); font-weight:700; }
   .panes{
     display:grid;
     grid-template-columns: 1.15fr 1fr;
-    gap: 16px;
+    gap: 18px;
   }
   @media (max-width: 760px){
     .panes{ grid-template-columns: 1fr; }
   }
   .pane-label{
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    color: var(--chalk-dim);
-    margin: 0 0 6px 2px;
-    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    font-weight: 700;
+    margin: 0 0 8px 4px;
+    display:flex;
+    align-items:center;
+    gap:8px;
   }
+  .pane-label::before{
+    content:"";
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--run-1);
+  }
+  .panes > div:nth-child(2) .pane-label::before{ background: #6fa8e8; }
   .editor-wrap{
     position: relative;
-    background: rgba(0,0,0,0.18);
-    border-radius: 6px;
-    border: 1px solid rgba(238,242,234,0.15);
+    background: var(--board);
+    border-radius: 14px;
+    border: 1px solid var(--board-edge);
     overflow:hidden;
+    box-shadow: 0 6px 16px rgba(30,51,41,0.18);
   }
   .editor-wrap.correct{
-    border-color: var(--chalk-green);
+    border-color: #4cc08f;
+    box-shadow: 0 0 0 3px rgba(76,192,143,0.45), 0 6px 16px rgba(30,51,41,0.18);
   }
   #lineNumbers{
     position:absolute;
     top:0; left:0; bottom:0;
-    width: 38px;
-    padding: 12px 0;
+    width: 44px;
+    padding: 14px 0;
     text-align:right;
-    font: 13px/1.6 "SFMono-Regular", Consolas, monospace;
-    color: rgba(238,242,234,0.28);
+    font: var(--code-size)/1.6 "SFMono-Regular", Consolas, monospace;
+    color: rgba(238,242,234,0.30);
     user-select: none;
-    background: rgba(0,0,0,0.12);
+    background: rgba(0,0,0,0.15);
     z-index: 3;
+    white-space: pre;
+    overflow: hidden;
+    padding-right: 8px;
   }
   .code-scroll{
     position:relative;
-    height: 360px;
+    height: 420px;
     overflow: auto;
-    margin-left: 38px;
+    margin-left: 44px;
   }
   #overlay, textarea{
     position:absolute;
@@ -174,8 +272,8 @@
     width: max-content;
     min-width: 100%;
     min-height: 100%;
-    padding: 12px 14px;
-    font: 13px/1.6 "SFMono-Regular", Consolas, "Courier New", monospace;
+    padding: 14px 14px;
+    font: var(--code-size)/1.6 "SFMono-Regular", Consolas, "Courier New", monospace;
     white-space: pre;
     word-break: normal;
   }
@@ -192,6 +290,7 @@
     resize:none;
     outline:none;
     color: var(--chalk);
+    caret-color: var(--chalk-yellow);
     z-index: 1;
   }
   textarea.practice-active{
@@ -201,39 +300,161 @@
   .ok{ color: var(--chalk); }
   .bad{ color: var(--chalk-pink); background: rgba(240,133,127,0.18); border-radius:2px; }
   .ghost{ color: var(--chalk-ghost); }
+  #acBox{
+    position:absolute;
+    display:none;
+    z-index:5;
+    background: var(--board-edge);
+    border: 1px solid rgba(232,214,147,0.4);
+    border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    min-width: 130px;
+    overflow:hidden;
+    font: 15px/1.5 "SFMono-Regular", Consolas, monospace;
+  }
+  .ac-item{
+    padding: 5px 12px;
+    color: var(--chalk-dim);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .ac-item.active{
+    background: rgba(232,214,147,0.22);
+    color: var(--chalk-yellow);
+  }
   #output{
     width:100%;
-    height: 360px;
+    height: 420px;
     overflow-y:auto;
-    font: 13px/1.6 "SFMono-Regular", Consolas, "Courier New", monospace;
-    padding: 12px 14px;
+    font: var(--code-size)/1.6 "SFMono-Regular", Consolas, "Courier New", monospace;
+    padding: 14px 16px;
     white-space: pre-wrap;
     word-break: break-word;
-    background: rgba(0,0,0,0.18);
-    border-radius: 6px;
-    border: 1px solid rgba(238,242,234,0.15);
+    background: var(--board);
+    color: var(--chalk);
+    border-radius: 14px;
+    border: 1px solid var(--board-edge);
+    box-shadow: 0 6px 16px rgba(30,51,41,0.18);
   }
   #output .err{ color: var(--chalk-pink); }
-  #output .placeholder{ color: rgba(238,242,234,0.3); }
+  #output .placeholder{ color: rgba(238,242,234,0.32); }
   .footnote{
-    margin-top: 12px;
-    font-size: 11.5px;
-    color: rgba(238,242,234,0.4);
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--ink-dim);
     display:flex;
     justify-content: space-between;
     flex-wrap:wrap;
     gap:6px;
   }
-  #submitBtn, #copyBtn{
-    border-color: rgba(159,214,160,0.5);
-    color: var(--chalk-green);
-  }
-  #submitBtn:hover, #copyBtn:hover{ border-color: var(--chalk-green); }
   #copyMsg{
-    font-size: 12px;
-    color: var(--chalk-green);
+    font-size: 12.5px;
+    color: var(--mint-ink);
+    font-weight: 700;
     margin-left: 4px;
   }
+
+  /* ---------- エラーのヒント ---------- */
+  #lineNumbers .err-line{
+    color: #ffffff;
+    background: rgba(240,133,127,0.55);
+    border-radius: 3px;
+    padding: 0 3px;
+  }
+  .hint-panel{
+    margin-top: 18px;
+    background: #fff7f1;
+    border: 1.5px solid var(--peach-line);
+    border-radius: 16px;
+    padding: 16px 20px 14px;
+    color: var(--ink);
+    animation: hintIn 0.25s ease;
+  }
+  .hint-panel[hidden]{ display:none; }
+  @keyframes hintIn{ from{ opacity:0; transform: translateY(6px); } to{ opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce){ .hint-panel{ animation:none; } }
+  .hint-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom: 10px;
+  }
+  .hint-badge{
+    background: var(--peach-bg);
+    color: var(--peach-ink);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 999px;
+  }
+  .hint-summary{ font-weight: 700; font-size: 15px; }
+  .hint-close{
+    margin-left:auto;
+    border:none;
+    background: transparent;
+    font-size: 20px;
+    line-height: 1;
+    padding: 2px 8px;
+    color: var(--ink-dim);
+  }
+  .hint-close:hover{ background: var(--peach-bg); box-shadow:none; transform:none; }
+  .hint-block{
+    background: #fff;
+    border: 1px solid #f3dccf;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.75;
+  }
+  .hint-block h3{
+    margin: 0 0 4px;
+    font-size: 13px;
+    color: var(--peach-ink);
+  }
+  .hint-block p{ margin: 0; }
+  .hint-block ul{ margin: 4px 0 0; padding-left: 1.3em; }
+  .hint-block code{
+    font-family: "SFMono-Regular", Consolas, monospace;
+    background: #f4f1ea;
+    border-radius: 4px;
+    padding: 0 4px;
+  }
+  .hint-code{
+    display:block;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    background: #f4f1ea;
+    border-radius: 6px;
+    white-space: pre;
+    overflow-x: auto;
+    padding: 6px 10px;
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .hint-code .mark{ color: #d0453a; font-weight: 700; }
+  .hint-code .exp{ color: var(--mint-ink); font-weight: 700; }
+  .hint-ai{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top: 4px;
+  }
+  #askAiBtn{
+    background: var(--lav-bg);
+    border-color: var(--lav-line);
+    color: var(--lav-ink);
+    font-weight: 700;
+  }
+  .hint-ai-note{ font-size: 12px; color: var(--ink-dim); }
+  .hint-ai-note kbd{
+    font: 11px "SFMono-Regular", Consolas, monospace;
+    background:#fff; border:1px solid var(--line); border-bottom-width:2px;
+    border-radius:4px; padding:0 4px;
+  }
+  .hint-ai-msg{ font-size: 12.5px; font-weight: 700; color: var(--mint-ink); }
 </style>
 </head>
 <body>
@@ -248,16 +469,26 @@
     <div class="toolbar">
       <select id="sampleSelect">
         <option value="">お手本を選ぶ...</option>
-        <option value="kiso1">基礎STEP1：文字と計算結果を表示する</option>
-        <option value="kiso2">基礎STEP2：三角形の面積を求める</option>
-        <option value="kiso3">基礎STEP3：点数の判定(分岐構造)</option>
-        <option value="kiso4for">基礎STEP4：0～5を表示(for文)</option>
-        <option value="kiso4while">基礎STEP4：0～5を表示(while文)</option>
-        <option value="ouyo1">応用1 STEP1：FizzBuzz</option>
-        <option value="ouyo2">応用1 STEP2：偶数・奇数の判定</option>
-        <option value="ouyo3">応用1 STEP3：5つのテストの合計と平均</option>
+        <optgroup label="基礎">
+          <option value="kiso1">STEP1：文字と計算結果を表示する</option>
+          <option value="kiso2">STEP2：三角形の面積を求める</option>
+          <option value="kiso3">STEP3：点数の判定(分岐構造)</option>
+          <option value="kiso4for">STEP4：0～5を表示(for文)</option>
+          <option value="kiso4while">STEP4：0～5を表示(while文)</option>
+        </optgroup>
+        <optgroup label="応用1">
+          <option value="ouyo1">STEP1：FizzBuzz</option>
+          <option value="ouyo2">STEP2：偶数・奇数の判定</option>
+          <option value="ouyo3">STEP3：5つのテストの合計と平均</option>
+        </optgroup>
+        <optgroup label="応用2">
+          <option value="ouy2_janken">STEP1：乱数でじゃんけん</option>
+          <option value="ouy2_dice">STEP1：乱数でサイコロ(1000回)</option>
+          <option value="ouy2_func">STEP2：関数で円の面積</option>
+        </optgroup>
       </select>
       <button id="modeBtn">✎ 入力練習モード: OFF</button>
+      <button id="pairBtn" class="active" title="( [ { ' &quot; の自動補完と自動インデント">( ) 自動補完: ON</button>
       <button id="runBtn">▶ 実行 (Ctrl+Enter)</button>
       <button id="clearBtn">出力を消す</button>
       <button id="copyBtn">📄 コードをコピー</button>
@@ -265,6 +496,12 @@
       <span id="copyMsg"></span>
       <span id="status">Pyodideを読み込み中...</span>
     </div>
+
+    <p class="hint" id="hintLine">
+      <kbd>Tab</kbd> コマンドの候補を表示(もう一度 <kbd>Tab</kbd> で選び <kbd>Enter</kbd> で決定) ／ <kbd>(</kbd> <kbd>[</kbd> <kbd>{</kbd> <kbd>'</kbd> <kbd>"</kbd> 閉じる側も自動入力 ／
+      <kbd>Enter</kbd> 自動で字下げ(「:」の次の行はさらに下げる) ／ <kbd>Shift</kbd>+<kbd>Tab</kbd> 字下げを戻す ／
+      <kbd>Ctrl</kbd>+<kbd>Enter</kbd> 実行
+    </p>
 
     <div class="progressRow" id="progressRow">
       <span>入力の一致度:</span>
@@ -280,6 +517,7 @@
           <div class="code-scroll" id="codeScroll">
             <pre id="overlay"></pre>
             <textarea id="code" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+            <div id="acBox"></div>
           </div>
         </div>
       </div>
@@ -288,6 +526,20 @@
         <div id="output"><span class="placeholder">ここに出力が表示されます。</span></div>
       </div>
     </div>
+
+    <section id="hintPanel" class="hint-panel" aria-live="polite" hidden>
+      <div class="hint-head">
+        <span class="hint-badge">💡 エラーのヒント</span>
+        <span id="hintSummary" class="hint-summary"></span>
+        <button id="hintCloseBtn" class="hint-close" aria-label="ヒントを閉じる">×</button>
+      </div>
+      <div id="hintBody"></div>
+      <div class="hint-ai">
+        <button id="askAiBtn">🤖 AIに聞く(Copilot)</button>
+        <span class="hint-ai-note">質問文をコピーしてCopilotを開きます。Copilotの入力欄に <kbd>Ctrl</kbd>+<kbd>V</kbd> で貼り付けて送信してください。</span>
+        <span id="askAiMsg" class="hint-ai-msg"></span>
+      </div>
+    </section>
 
     <div class="footnote">
       <span>①「コードをコピー」→ ②「提出フォームを開く」で開いたMS Formsに貼り付けて送信してください。</span>
@@ -299,6 +551,7 @@
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script>
 const codeArea = document.getElementById('code');
+let errorLine = null;
 const overlay = document.getElementById('overlay');
 const codeScroll = document.getElementById('codeScroll');
 const lineNumbers = document.getElementById('lineNumbers');
@@ -326,6 +579,9 @@ const FORMS_URLS = {
   ouyo1: "https://forms.cloud.microsoft/r/6zApMTxLyM",
   ouyo2: "https://forms.cloud.microsoft/r/6zApMTxLyM",
   ouyo3: "https://forms.cloud.microsoft/r/6zApMTxLyM",
+  ouy2_janken: "https://forms.cloud.microsoft/r/6zApMTxLyM",
+  ouy2_dice: "https://forms.cloud.microsoft/r/6zApMTxLyM",
+  ouy2_func: "https://forms.cloud.microsoft/r/6zApMTxLyM",
   default: "https://forms.cloud.microsoft/r/6zApMTxLyM"
 };
 // ▲▲▲ ここまで ▲▲▲
@@ -338,7 +594,10 @@ const sampleLabels = {
   kiso4while: "基礎STEP4：0～5を表示(while文)",
   ouyo1: "応用1 STEP1：FizzBuzz",
   ouyo2: "応用1 STEP2：偶数・奇数の判定",
-  ouyo3: "応用1 STEP3：5つのテストの合計と平均"
+  ouyo3: "応用1 STEP3：5つのテストの合計と平均",
+  ouy2_janken: "応用2 STEP1：乱数でじゃんけん",
+  ouy2_dice: "応用2 STEP1：乱数でサイコロ(1000回)",
+  ouy2_func: "応用2 STEP2：関数で円の面積"
 };
 
 const samples = {
@@ -396,6 +655,27 @@ for i in range(5):
 print(score)
 print('goukei:',sum)
 print('heikin:',sum/len(score))
+`,
+  ouy2_janken: `import random
+te=['gu','tyoki','pa']
+a=random.randint(0,2)
+print(te[a])
+`,
+  ouy2_dice: `import random
+dice=[0,0,0,0,0,0]
+i=1000
+while i>0:
+    r=random.randrange(6)
+    dice[r]=dice[r]+1
+    i=i-1
+print(dice)
+`,
+  ouy2_func: `def circle(r):
+    return r**2*3.14
+
+r=int(input('hankei?'))
+area=circle(r)
+print(area)
 `
 };
 
@@ -416,30 +696,63 @@ function updateLineNumbers() {
   const refLines = reference.split('\n').length;
   const lines = Math.max(typedLines, refLines);
   let out = '';
-  for (let i = 1; i <= lines; i++) out += i + '\n';
-  lineNumbers.textContent = out;
+  for (let i = 1; i <= lines; i++) {
+    out += (i === errorLine ? '<span class="err-line">' + i + '</span>' : i) + '\n';
+  }
+  lineNumbers.innerHTML = out;
 }
 
 function renderOverlay() {
   if (!practiceMode) {
     overlay.innerHTML = '';
+    updateLineNumbers();
     return;
   }
   const typed = codeArea.value;
-  const len = Math.max(typed.length, target.length);
+  // カーソルより左(=生徒が打ち進めた部分)はお手本と1文字ずつ照合する。
+  // カーソルより右にある文字(自動補完で先に入った ) や ' など)は、
+  // お手本の続きの中で「この先に来るはずの文字」として照合する。
+  const caret = Math.min(codeArea.selectionStart, typed.length);
+  const prefix = typed.slice(0, caret);
+  const suffix = typed.slice(caret);
   let html = '';
   let correctCount = 0;
-  for (let i = 0; i < len; i++) {
+
+  for (let i = 0; i < prefix.length; i++) {
     const tChar = target[i];
-    const uChar = typed[i];
-    if (uChar === undefined) {
-      html += '<span class="ghost">' + escapeHtml(tChar) + '</span>';
-    } else if (tChar !== undefined && uChar === tChar) {
+    const uChar = prefix[i];
+    if (tChar !== undefined && uChar === tChar) {
       html += '<span class="ok">' + escapeHtml(uChar) + '</span>';
       correctCount++;
     } else {
       html += '<span class="bad">' + escapeHtml(uChar === '\n' ? ' ' : uChar) + (uChar === '\n' ? '\n' : '') + '</span>';
     }
+  }
+
+  const rest = target.slice(prefix.length);
+  const matchedAt = new Set();
+  let unmatched = '';
+  let j = 0;
+  for (const ch of suffix) {
+    let k = j;
+    while (k < rest.length && rest[k] !== ch) k++;
+    if (k < rest.length) {
+      matchedAt.add(k);
+      j = k + 1;
+    } else {
+      unmatched += ch;
+    }
+  }
+  for (let i = 0; i < rest.length; i++) {
+    if (matchedAt.has(i)) {
+      html += '<span class="ok">' + escapeHtml(rest[i]) + '</span>';
+      correctCount++;
+    } else {
+      html += '<span class="ghost">' + escapeHtml(rest[i]) + '</span>';
+    }
+  }
+  for (const ch of unmatched) {
+    html += '<span class="bad">' + escapeHtml(ch === '\n' ? ' ' : ch) + (ch === '\n' ? '\n' : '') + '</span>';
   }
   overlay.innerHTML = html;
 
@@ -461,8 +774,181 @@ function renderOverlay() {
 function syncScroll() {
   overlay.style.transform = 'translate(' + (-codeScroll.scrollLeft) + 'px,' + (-codeScroll.scrollTop) + 'px)';
   lineNumbers.scrollTop = codeScroll.scrollTop;
+  if (acBox.style.display === 'block') {
+    acBox.style.transform = 'translate(' + (-codeScroll.scrollLeft) + 'px,' + (-codeScroll.scrollTop) + 'px)';
+  }
 }
 codeScroll.addEventListener('scroll', syncScroll);
+
+// ---------- Tab補完(オートコンプリート) ----------
+const acBox = document.getElementById('acBox');
+const KEYWORDS = ['print', 'input', 'int', 'float', 'str', 'len', 'range', 'append',
+  'if', 'elif', 'else', 'for', 'while', 'in', 'def', 'return',
+  'import', 'random', 'randint', 'randrange', 'True', 'False'];
+let acMatches = [];
+let acActiveIndex = 0;
+let _charWidth = null;
+
+function getCharWidth() {
+  if (_charWidth) return _charWidth;
+  const c = document.createElement('canvas');
+  const ctx = c.getContext('2d');
+  ctx.font = '16px SFMono-Regular, Consolas, monospace';
+  _charWidth = ctx.measureText('M').width;
+  return _charWidth;
+}
+
+function getWordBeforeCaret() {
+  const pos = codeArea.selectionStart;
+  const value = codeArea.value;
+  let start = pos;
+  while (start > 0 && /[A-Za-z0-9_]/.test(value[start - 1])) start--;
+  return { start, end: pos, word: value.slice(start, pos) };
+}
+
+function hideAutocomplete() {
+  acBox.style.display = 'none';
+  acMatches = [];
+}
+
+function positionAutocomplete() {
+  const { end } = getWordBeforeCaret();
+  const before = codeArea.value.slice(0, end);
+  const lines = before.split('\n');
+  const row = lines.length - 1;
+  const col = lines[lines.length - 1].length;
+  const charWidth = getCharWidth();
+  const lineHeight = 16 * 1.6;
+  const left = 14 + col * charWidth;
+  const top = 14 + (row + 1) * lineHeight;
+  acBox.style.left = left + 'px';
+  acBox.style.top = top + 'px';
+  syncScroll();
+}
+
+function renderAutocomplete() {
+  acBox.innerHTML = acMatches.map((m, i) =>
+    '<div class="ac-item' + (i === acActiveIndex ? ' active' : '') + '" data-i="' + i + '">' + m + '</div>'
+  ).join('');
+  acBox.style.display = 'block';
+  positionAutocomplete();
+}
+
+function acceptAutocomplete(word) {
+  const { start, end } = getWordBeforeCaret();
+  const value = codeArea.value;
+  codeArea.value = value.slice(0, start) + word + value.slice(end);
+  const newPos = start + word.length;
+  codeArea.selectionStart = codeArea.selectionEnd = newPos;
+  hideAutocomplete();
+  renderOverlay();
+  codeArea.focus();
+}
+
+// ---------- カッコ・クォーテーションの自動補完／自動インデント ----------
+const PAIRS = { '(': ')', '[': ']', '{': '}', "'": "'", '"': '"' };
+const CLOSERS = new Set([')', ']', '}', "'", '"']);
+const WORD_CHAR = /[A-Za-z0-9_]/;
+let autoPairOn = true;
+
+function insertText(text) {
+  codeArea.focus();
+  let ok = false;
+  try { ok = document.execCommand('insertText', false, text); } catch (err) { ok = false; }
+  if (!ok) {
+    codeArea.setRangeText(text, codeArea.selectionStart, codeArea.selectionEnd, 'end');
+    codeArea.dispatchEvent(new Event('input'));
+  }
+}
+
+function handleAutoEdit(e) {
+  if (!autoPairOn) return false;
+  if (e.isComposing || e.key === 'Process' || e.ctrlKey || e.metaKey || e.altKey) return false;
+
+  const v = codeArea.value;
+  const s = codeArea.selectionStart;
+  const en = codeArea.selectionEnd;
+  const prev = v[s - 1];
+  const next = v[en];
+
+  // 閉じカッコ・閉じクォートを打ったとき、すぐ右に同じ文字があれば重ねずに通り過ぎる
+  if (CLOSERS.has(e.key) && s === en && next === e.key) {
+    e.preventDefault();
+    codeArea.setSelectionRange(s + 1, s + 1);
+    return true;
+  }
+
+  // 開きカッコ・クォートを打ったら、閉じる側も一緒に入れる
+  if (PAIRS[e.key]) {
+    const open = e.key;
+    const close = PAIRS[open];
+    const isQuote = open === "'" || open === '"';
+
+    if (s !== en) {
+      // 範囲を選択しているときは、その範囲をカッコ(クォート)で囲む
+      e.preventDefault();
+      const selected = v.slice(s, en);
+      insertText(open + selected + close);
+      codeArea.setSelectionRange(s + 1, s + 1 + selected.length);
+      return true;
+    }
+    if (isQuote && prev && WORD_CHAR.test(prev)) return false;
+    if (next && WORD_CHAR.test(next)) return false;
+
+    e.preventDefault();
+    insertText(open + close);
+    codeArea.setSelectionRange(s + 1, s + 1);
+    return true;
+  }
+
+  if (e.key === 'Backspace' && s === en && s > 0) {
+    // () や '' の間で消したら、両方まとめて消す
+    if (PAIRS[prev] && PAIRS[prev] === next) {
+      e.preventDefault();
+      codeArea.setSelectionRange(s - 1, s + 1);
+      insertText('');
+      codeArea.setSelectionRange(s - 1, s - 1);
+      return true;
+    }
+    // 行頭のスペース(インデント)は4つずつまとめて消す
+    const lineStart = v.lastIndexOf('\n', s - 1) + 1;
+    const before = v.slice(lineStart, s);
+    if (before.length > 0 && /^ +$/.test(before)) {
+      e.preventDefault();
+      const remove = before.length % 4 === 0 ? 4 : before.length % 4;
+      codeArea.setSelectionRange(s - remove, s);
+      insertText('');
+      codeArea.setSelectionRange(s - remove, s - remove);
+      return true;
+    }
+  }
+
+  if (e.key === 'Enter' && !e.shiftKey) {
+    // 改行したら前の行と同じ深さに字下げ。行末が「:」ならさらに4つ下げる
+    e.preventDefault();
+    const lineStart = v.lastIndexOf('\n', s - 1) + 1;
+    const line = v.slice(lineStart, s);
+    let indent = line.match(/^ */)[0];
+    if (/:\s*$/.test(line)) indent += '    ';
+    if (prev && '([{'.includes(prev) && PAIRS[prev] === next) {
+      insertText('\n' + indent + '    ' + '\n' + indent);
+      const pos = s + 1 + indent.length + 4;
+      codeArea.setSelectionRange(pos, pos);
+    } else {
+      insertText('\n' + indent);
+    }
+    return true;
+  }
+
+  return false;
+}
+
+acBox.addEventListener('mousedown', (e) => {
+  const item = e.target.closest('.ac-item');
+  if (!item) return;
+  e.preventDefault();
+  acceptAutocomplete(acMatches[Number(item.dataset.i)]);
+});
 
 codeArea.addEventListener('compositionstart', () => { isComposing = true; });
 codeArea.addEventListener('compositionend', () => {
@@ -471,13 +957,80 @@ codeArea.addEventListener('compositionend', () => {
 });
 
 codeArea.addEventListener('input', () => {
+  hideAutocomplete();
+  if (errorLine !== null) errorLine = null;
   if (!isComposing) renderOverlay();
   else updateLineNumbers();
 });
 
+codeArea.addEventListener('blur', () => hideAutocomplete());
+
+// カーソルを矢印キーやクリックで動かしたときも、照合表示を描き直す
+['keyup', 'click', 'select'].forEach(ev => codeArea.addEventListener(ev, () => {
+  if (practiceMode && !isComposing) renderOverlay();
+}));
+
 codeArea.addEventListener('keydown', (e) => {
+  if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
+
+  if (acMatches.length) {
+    const n = acMatches.length;
+    const goNext = (e.key === 'Tab' && !e.shiftKey) || e.key === 'ArrowDown';
+    const goPrev = (e.key === 'Tab' && e.shiftKey) || e.key === 'ArrowUp';
+    if (goNext) {
+      e.preventDefault();
+      acActiveIndex = (acActiveIndex + 1) % n;
+      renderAutocomplete();
+      return;
+    }
+    if (goPrev) {
+      e.preventDefault();
+      acActiveIndex = acActiveIndex <= 0 ? n - 1 : acActiveIndex - 1;
+      renderAutocomplete();
+      return;
+    }
+    if (e.key === 'Enter' && acActiveIndex >= 0) {
+      e.preventDefault();
+      acceptAutocomplete(acMatches[acActiveIndex]);
+      return;
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      hideAutocomplete();
+      return;
+    }
+    hideAutocomplete();
+  }
+
+  if (handleAutoEdit(e)) { renderOverlay(); return; }
+
+  if (e.key === 'Tab' && e.shiftKey) {
+    e.preventDefault();
+    const v = codeArea.value;
+    const s = codeArea.selectionStart;
+    const lineStart = v.lastIndexOf('\n', s - 1) + 1;
+    const lead = v.slice(lineStart).match(/^ */)[0].length;
+    const remove = Math.min(4, lead);
+    if (remove > 0) {
+      codeArea.setSelectionRange(lineStart, lineStart + remove);
+      insertText('');
+      codeArea.setSelectionRange(Math.max(lineStart, s - remove), Math.max(lineStart, s - remove));
+    }
+    return;
+  }
+
   if (e.key === 'Tab') {
     e.preventDefault();
+    const { word } = getWordBeforeCaret();
+    if (word.length > 0) {
+      const matches = KEYWORDS.filter(k => k.startsWith(word) && k !== word);
+      if (matches.length) {
+        acMatches = matches;
+        acActiveIndex = -1;
+        renderAutocomplete();
+        return;
+      }
+    }
     const start = codeArea.selectionStart, end = codeArea.selectionEnd;
     codeArea.value = codeArea.value.slice(0, start) + '    ' + codeArea.value.slice(end);
     codeArea.selectionStart = codeArea.selectionEnd = start + 4;
@@ -490,6 +1043,7 @@ codeArea.addEventListener('keydown', (e) => {
 });
 
 function setPracticeMode(on) {
+  hideAutocomplete();
   practiceMode = on;
   modeBtn.textContent = on ? '✎ 入力練習モード: ON' : '✎ 入力練習モード: OFF';
   modeBtn.classList.toggle('active', on);
@@ -507,9 +1061,26 @@ function setPracticeMode(on) {
   codeArea.focus();
 }
 
-modeBtn.addEventListener('click', () => setPracticeMode(!practiceMode));
+modeBtn.addEventListener('click', () => {
+  setPracticeMode(!practiceMode);
+  updatePairBtn();
+});
+
+const pairBtn = document.getElementById('pairBtn');
+function updatePairBtn() {
+  pairBtn.textContent = '( ) 自動補完: ' + (autoPairOn ? 'ON' : 'OFF');
+  pairBtn.classList.toggle('active', autoPairOn);
+  pairBtn.title = "( [ { ' \" の自動補完と自動インデント";
+}
+pairBtn.addEventListener('click', () => {
+  autoPairOn = !autoPairOn;
+  updatePairBtn();
+  codeArea.focus();
+});
+updatePairBtn();
 
 sampleSelect.addEventListener('change', () => {
+  hideAutocomplete();
   const key = sampleSelect.value;
   if (!key || !samples[key]) return;
   if (practiceMode) {
@@ -565,16 +1136,306 @@ pyodideReady = initPyodide().catch(err => {
   appendOutput('Pyodideの読み込みでエラーが発生しました: ' + err + '\n', true);
 });
 
+// =====================================================================
+// エラーのヒント(AIを使わず、アプリ内で解説する)
+// =====================================================================
+
+// ▼ Copilot(Microsoft 365 Copilot Chat)のURL。学校の環境に合わせて変更できます
+const COPILOT_URL = 'https://m365.cloud.microsoft/chat';
+
+const hintPanel = document.getElementById('hintPanel');
+const hintSummary = document.getElementById('hintSummary');
+const hintBody = document.getElementById('hintBody');
+const askAiBtn = document.getElementById('askAiBtn');
+const askAiMsg = document.getElementById('askAiMsg');
+let lastErrorText = '';
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Pyodide内部の行を取り除き、生徒のプログラムに関係する部分だけ残す
+function cleanTraceback(raw) {
+  const text = raw.replace(/^PythonError:\s*/, '').replace(/\s+$/, '');
+  const lines = text.split('\n');
+  const idx = lines.findIndex(l => l.includes('File "<exec>"'));
+  if (idx < 0) return text;
+  const body = lines.slice(idx).join('\n');
+  const last = lines[lines.length - 1];
+  const isSyntax = /^(SyntaxError|IndentationError|TabError)\b/.test(last);
+  return (isSyntax ? '' : 'Traceback (most recent call last):\n') + body;
+}
+
+function parseError(cleaned) {
+  const lines = cleaned.split('\n').filter(l => l.trim() !== '');
+  const last = lines[lines.length - 1] || '';
+  const m = last.match(/^([A-Za-z_]+(?:Error|Exception|Interrupt))(?::\s*(.*))?$/);
+  let line = null;
+  const re = /File "<exec>", line (\d+)/g;
+  let mm;
+  while ((mm = re.exec(cleaned)) !== null) line = Number(mm[1]);
+  return { type: m ? m[1] : 'エラー', msg: m ? (m[2] || '') : last, line };
+}
+
+const ERROR_JA = {
+  SyntaxError: '書き方(文法)の間違い',
+  IndentationError: '字下げ(インデント)の間違い',
+  TabError: '字下げにタブとスペースが混ざっている',
+  NameError: '名前が見つからない',
+  TypeError: 'データの種類(型)が合わない',
+  ValueError: '値がおかしい',
+  IndexError: 'リストの番号(添字)が範囲外',
+  ZeroDivisionError: '0で割った',
+  AttributeError: 'その命令が使えない',
+  EOFError: '入力が取り消された',
+  ModuleNotFoundError: 'モジュールが見つからない'
+};
+
+function didYouMean(msg) {
+  const m = msg.match(/Did you mean:? '([^']+)'/);
+  return m ? m[1] : null;
+}
+
+function explainError(type, msg) {
+  const dym = didYouMean(msg);
+  let m;
+  switch (type) {
+    case 'SyntaxError':
+      if (/expected ':'/.test(msg))
+        return '行の最後に <code>:</code>(半角のコロン)が足りません。<code>if</code>・<code>elif</code>・<code>else</code>・<code>for</code>・<code>while</code>・<code>def</code> の行は、最後に <code>:</code> を付けるきまりです。';
+      if (/was never closed/.test(msg))
+        return '<code>(</code> や <code>[</code> を閉じ忘れています。開いたカッコと同じ数だけ、閉じカッコ <code>)</code> <code>]</code> があるか数えてみましょう。';
+      if (/unmatched|does not match opening parenthesis/.test(msg))
+        return '閉じカッコが多すぎるか、カッコの種類が合っていません。<code>(</code> は <code>)</code>、<code>[</code> は <code>]</code> で閉じます。';
+      if (/unterminated string literal|EOL while scanning/.test(msg))
+        return '文字列の <code>\'</code> や <code>"</code> を閉じ忘れています。文字列は始まりと終わりを同じクォーテーションで囲みます。';
+      if (/invalid character|invalid non-printable character/.test(msg))
+        return '全角の文字(全角のカッコ・クォーテーション・コロン・スペースなど)が混ざっています。プログラムの記号は、日本語入力をOFFにして半角で打ちましょう。';
+      if (/Maybe you meant '==' |cannot assign to/.test(msg))
+        return '「等しいか」を調べるときは <code>==</code>(イコール2つ)を使います。<code>=</code> 1つは「変数に値を入れる(代入)」という意味です。';
+      if (/forgot a comma/.test(msg))
+        return 'カンマ <code>,</code> が抜けているようです。リストの値の間や、<code>print()</code> の中で区切る場所を確認しましょう。';
+      if (/invalid decimal literal/.test(msg))
+        return '数字のすぐ後ろに文字が続いているか、全角の数字が混ざっています。数字と記号の間のつながりを確認しましょう。';
+      if (/'return' outside function/.test(msg))
+        return '<code>return</code> は関数(<code>def</code>)の中でしか使えません。<code>return</code> の行が <code>def</code> の中に入るように字下げされているか確認しましょう。';
+      return 'Pythonの書き方のきまりに合わない部分があります。その行(または1つ前の行)のカッコ・クォーテーション・コロン・スペルを確認しましょう。<br>※本当の原因が<strong>1つ前の行</strong>にあることもよくあります。';
+    case 'IndentationError':
+      if (/expected an indented block/.test(msg))
+        return '<code>:</code> で終わる行(<code>if</code>・<code>for</code> など)の次の行は、字下げ(スペース4つ)が必要です。';
+      if (/unexpected indent/.test(msg))
+        return '字下げが必要ない行が字下げされています。行の先頭に余分なスペースがないか確認しましょう。';
+      if (/unindent does not match/.test(msg))
+        return '字下げの深さがそろっていません。同じかたまりの行は、同じ数のスペースで字下げします(4つ、8つ…)。';
+      return '字下げ(行の先頭のスペース)の数を確認しましょう。';
+    case 'TabError':
+      return '字下げにタブとスペースが混ざっています。字下げはスペースだけで(Tabキーはこのアプリではスペース4つになります)そろえましょう。';
+    case 'NameError': {
+      m = msg.match(/name '([^']+)' is not defined/);
+      const name = m ? m[1] : '';
+      let s = '<code>' + esc(name) + '</code> という名前がPythonに見つかりません。考えられる原因:<ul>'
+        + '<li>打ち間違い(大文字と小文字も区別されます)</li>'
+        + '<li>変数に値を入れる前に使っている</li>'
+        + '<li>文字列なのに <code>\'</code> <code>\'</code> で囲み忘れている</li></ul>';
+      if (dym) s += '<p style="margin-top:6px">もしかして <code>' + esc(dym) + '</code> のことですか？</p>';
+      return s;
+    }
+    case 'TypeError':
+      if (/can only concatenate str/.test(msg))
+        return '文字列と数値を <code>+</code> でつなげることはできません。<code>print(\'goukei:\', sum)</code> のように <code>,</code> で区切るか、<code>str()</code> で数値を文字列にしましょう。';
+      if (/unsupported operand type/.test(msg) || /not supported between instances of/.test(msg))
+        return '数値と文字列を計算・比較しようとしています。<code>input()</code> で受け取った値は文字列なので、<code>int(input(...))</code> のように <code>int()</code> で整数に変えてから使いましょう。';
+      if (/object is not callable/.test(msg))
+        return '<code>( )</code> を付けて呼び出したものが命令(関数)ではありません。関数と同じ名前の変数を作っていないか、掛け算の <code>*</code> が抜けていないか確認しましょう。';
+      if (/positional argument|required positional argument/.test(msg))
+        return '関数に渡す値(引数)の数が合っていません。<code>def</code> の行のカッコの中の数と、呼び出すときのカッコの中の数を比べましょう。';
+      return 'データの種類(数値・文字列・リストなど)が、その使い方に合っていません。';
+    case 'ValueError':
+      m = msg.match(/invalid literal for int\(\) with base 10: '(.*)'/);
+      if (m)
+        return '<code>int()</code> に <code>' + (m[1] === '' ? '(空っぽ)' : esc(m[1])) + '</code> が渡されたため、整数にできませんでした。入力ダイアログには<strong>半角の数字</strong>を入れましょう(何も入れずにOKを押してもこのエラーになります)。';
+      return '値の内容が、その命令で使える形になっていません。';
+    case 'IndexError':
+      return 'リストにない番号(添字)を使おうとしています。リストの添字は <code>0</code> から始まり、最後は「要素の数 − 1」です。';
+    case 'ZeroDivisionError':
+      return '0で割り算をしています。割る数が0になっていないか確認しましょう。';
+    case 'AttributeError':
+      return 'その命令はこのデータには使えないか、名前の打ち間違いです。' + (dym ? '<br>もしかして <code>' + esc(dym) + '</code> のことですか？' : '');
+    case 'EOFError':
+      return '入力ダイアログで「キャンセル」が押されました。もう一度実行して、値を入力してからOKを押しましょう。';
+    case 'ModuleNotFoundError':
+      return '<code>import</code> の後ろの名前が間違っています。' + (dym ? 'もしかして <code>' + esc(dym) + '</code> ？' : 'スペルを確認しましょう(例: <code>random</code>)。');
+    default:
+      return 'エラーメッセージの最後の行に、何が起きたかが英語で書かれています。わからないときは下の「AIに聞く」を使ってみましょう。';
+  }
+}
+
+// 文字列の外にある全角記号・全角スペースを探す
+function findFullWidth(code) {
+  const found = [];
+  code.split('\n').forEach((line, li) => {
+    let quote = null;
+    for (let ci = 0; ci < line.length; ci++) {
+      const ch = line[ci];
+      if (quote) { if (ch === quote) quote = null; continue; }
+      if (ch === "'" || ch === '"') { quote = ch; continue; }
+      if (ch === '#') break;
+      if (/[　！-～‘’“”]/.test(ch)) {
+        let half;
+        if (ch === '　') half = '半角スペース';
+        else if (ch === '‘' || ch === '’') half = "'";
+        else if (ch === '“' || ch === '”') half = '"';
+        else half = String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+        found.push({ line: li + 1, col: ci + 1, ch: ch === '　' ? '全角スペース' : ch, half });
+      }
+    }
+  });
+  return found;
+}
+
+function charLabel(c) {
+  if (c === undefined) return '(何もなし)';
+  if (c === ' ') return 'スペース';
+  if (c === '　') return '全角スペース';
+  return '「' + c + '」';
+}
+
+// お手本と比べて、最初に違うところを見つける
+function compareWithTarget(code, tgt) {
+  const a = code.replace(/\s+$/, '').split('\n').map(l => l.replace(/\s+$/, ''));
+  const b = tgt.replace(/\s+$/, '').split('\n').map(l => l.replace(/\s+$/, ''));
+  const n = Math.max(a.length, b.length);
+  for (let i = 0; i < n; i++) {
+    const x = a[i], y = b[i];
+    if (x === y) continue;
+    if (x === undefined) {
+      return { line: i + 1, text: (i + 1) + '行目がまだありません。お手本の' + (i + 1) + '行目は次のとおりです。',
+        mine: null, model: y, col: 0 };
+    }
+    if (y === undefined) {
+      return { line: i + 1, text: 'お手本は' + b.length + '行で終わりですが、' + (i + 1) + '行目以降があります。',
+        mine: x, model: null, col: 0 };
+    }
+    let j = 0;
+    while (j < x.length && j < y.length && x[j] === y[j]) j++;
+    let text;
+    if (j >= x.length) text = (i + 1) + '行目の ' + (j + 1) + '文字目から、<code>' + esc(y.slice(j)) + '</code> が足りません。';
+    else if (j >= y.length) text = (i + 1) + '行目の最後に、余分な <code>' + esc(x.slice(j)) + '</code> があります。';
+    else text = (i + 1) + '行目の ' + (j + 1) + '文字目：お手本では ' + esc(charLabel(y[j])) + ' ですが、' + esc(charLabel(x[j])) + ' になっています。';
+    return { line: i + 1, text, mine: x, model: y, col: j };
+  }
+  return null;
+}
+
+function codeLineHtml(s, col, cls) {
+  if (s === null) return '<span style="color:#999">(なし)</span>';
+  if (col >= s.length) return esc(s) + '<span class="' + cls + '">▮</span>';
+  return esc(s.slice(0, col)) + '<span class="' + cls + '">' + esc(s[col] === ' ' ? '␣' : s[col]) + '</span>' + esc(s.slice(col + 1));
+}
+
+function showHint(cleaned) {
+  lastErrorText = cleaned;
+  const code = codeArea.value;
+  const err = parseError(cleaned);
+  errorLine = err.line;
+  updateLineNumbers();
+
+  const ja = ERROR_JA[err.type] ? '(' + ERROR_JA[err.type] + ')' : '';
+  hintSummary.textContent = (err.line ? err.line + '行目で ' : '') + err.type + ' ' + ja + ' が起きました';
+
+  let html = '<div class="hint-block"><h3>エラーの意味</h3><p>' + explainError(err.type, err.msg) + '</p></div>';
+
+  const fw = findFullWidth(code);
+  if (fw.length) {
+    html += '<div class="hint-block"><h3>全角の文字が見つかりました</h3><ul>'
+      + fw.slice(0, 5).map(f => '<li>' + f.line + '行目 ' + f.col + '文字目：<code>' + esc(f.ch) + '</code> → 半角の <code>' + esc(f.half) + '</code> に直しましょう</li>').join('')
+      + (fw.length > 5 ? '<li>ほかに ' + (fw.length - 5) + ' か所あります</li>' : '')
+      + '</ul></div>';
+  }
+
+  const key = sampleSelect.value;
+  if (key && samples[key]) {
+    const diff = compareWithTarget(code, samples[key]);
+    if (diff) {
+      html += '<div class="hint-block"><h3>お手本と違うところ</h3><p>' + diff.text + '</p>'
+        + '<span class="hint-code">あなた　: ' + codeLineHtml(diff.mine, diff.col, 'mark') + '\nお手本　: ' + codeLineHtml(diff.model, diff.col, 'exp') + '</span></div>';
+    } else {
+      html += '<div class="hint-block"><h3>お手本と比べると</h3><p>コードはお手本と同じです。実行中に入力した値(数字を半角で入れたか など)を確認しましょう。</p></div>';
+    }
+  }
+
+  hintBody.innerHTML = html;
+  askAiMsg.textContent = '';
+  hintPanel.hidden = false;
+  hintPanel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function hideHint() {
+  hintPanel.hidden = true;
+  if (errorLine !== null) { errorLine = null; updateLineNumbers(); }
+}
+
+document.getElementById('hintCloseBtn').addEventListener('click', hideHint);
+
+function buildAiPrompt() {
+  const key = sampleSelect.value;
+  const title = key && sampleLabels[key] ? sampleLabels[key] : '自分で書いたプログラム';
+  return [
+    '私は高校生で、Pythonを習い始めたところです。',
+    '次のプログラムを実行したらエラーが出ました。',
+    '直したプログラムの全文は書かずに、',
+    '(1) エラーの意味、(2) どの行のどのあたりがおかしいかのヒント を、やさしい日本語で教えてください。',
+    '自分で直してみたいので、答えそのものではなくヒントでお願いします。',
+    '',
+    '【課題】' + title,
+    '【プログラム】',
+    '```python',
+    codeArea.value.replace(/\s+$/, ''),
+    '```',
+    '【エラーメッセージ】',
+    '```',
+    lastErrorText,
+    '```'
+  ].join('\n');
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (e) {
+    const t = document.createElement('textarea');
+    t.value = text;
+    t.style.position = 'fixed';
+    t.style.opacity = '0';
+    document.body.appendChild(t);
+    t.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+    t.remove();
+    return ok;
+  }
+}
+
+askAiBtn.addEventListener('click', async () => {
+  const ok = await copyText(buildAiPrompt());
+  askAiMsg.textContent = ok ? '質問文をコピーしました。Copilotに貼り付けてください。' : 'コピーできませんでした。';
+  if (ok) window.open(COPILOT_URL, '_blank', 'noopener');
+});
+
 async function runCode() {
   const pyodide = await pyodideReady;
   if (!pyodide) return;
   output.innerHTML = '';
+  hideHint();
   runBtn.disabled = true;
   status.textContent = '実行中...';
   try {
     await pyodide.runPythonAsync(codeArea.value);
   } catch (err) {
-    appendOutput(String(err), true);
+    const cleaned = cleanTraceback(String(err));
+    appendOutput(cleaned + '\n', true);
+    showHint(cleaned);
   } finally {
     status.textContent = '準備完了';
     runBtn.disabled = false;
